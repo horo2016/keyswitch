@@ -6,9 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdint.h>
-#include <iostream> 
-#include <string>
-#include <vector>
+
 #include"wiringPi.h"
 #include <assert.h>
 #include <sys/select.h>
@@ -20,21 +18,23 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
+#define LED_IO 0 
+#define KEY_IO 1 
 
 int setup_gpio()
 {
     wiringPiSetup();
 	
 
-	pinMode (0,INPUT ) ;//key button
-	pinMode (1,OUTPUT ) ; //led
-	digitalWrite(1, LOW);//初始化就on
+	pinMode (KEY_IO,INPUT ) ;//key button
+	pinMode (LED_IO,OUTPUT ) ; //led
+	digitalWrite(LED_IO, LOW);//初始化就on
 
 
-    return true;
+    return 1;
 }
 
-int main_sonar()
+int main()
 {
 	int sleepcnt =0;
 	char flag =0;
@@ -44,32 +44,35 @@ int main_sonar()
     }
 
     while (1) {
-      if((digitalRead(0) != 1)){
-	    usleep(8000);
+      if((digitalRead(KEY_IO) != 1)){
+		usleep(5000);
 		sleepcnt =0;
 		flag =0;
-	   if((digitalRead(0) != 1)){
-	     while((digitalRead(0) != 1){
-			 sleepcnt ++;
-			 usleep(500000);
-			 while(!digitalRead(0));
+		if((digitalRead(KEY_IO) != 1)){
+			//printf("button press \n");
+			 while(digitalRead(KEY_IO) != 1){
+				 sleepcnt ++;
+				 usleep(500000);
+			 }
+			 while(!digitalRead(KEY_IO));
+			 //printf("button %d \n",sleepcnt);
 			 if(sleepcnt < 3)
 			 {
-				 digitalWrite(1, HIGH);//初始化就on
+				 digitalWrite(LED_IO, HIGH);//初始化就on
 				 system("sudo poweroff");
 			 }else if(sleepcnt >= 8)
 			 {
 				 flag =1;
-				 system("sudo /home/opt/create_ap.sh")
+				 system("sudo /opt/create_ap.sh");
 			 }
-		 }
+		 
 	   }
 	  }
 	  if(flag == 1)
 	  {
-		  digitalWrite(1, LOW);
+		  digitalWrite(LED_IO, LOW);
 		  usleep(500000);
-		  digitalWrite(1, HIGH);
+		  digitalWrite(LED_IO, HIGH);
 		  usleep(500000);
 	  }
     }
